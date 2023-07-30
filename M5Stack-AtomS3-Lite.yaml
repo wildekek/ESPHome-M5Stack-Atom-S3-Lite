@@ -4,7 +4,7 @@ substitutions:
   device_friendly_name: "M5Stack AtomS3 Lite"
   device_description: "M5Stack AtomS3 Lite"
   time_timezone: "Europe/Amsterdam"
-     
+       
 esphome:
   name: ${device_name}
   friendly_name: $device_friendly_name
@@ -12,10 +12,9 @@ esphome:
   name_add_mac_suffix: false
 
 esp32:
-  board: esp32-s3-devkitc-1 #m5stack-atoms3 not supported yet, needs platformio platform-espressif32 6.1.0
+  board: esp32-s3-devkitc-1
   framework:
-    type: esp-idf
-    version: recommended
+    type: arduino
 
 wifi:
   networks:
@@ -55,12 +54,12 @@ output:
         then:
           - light.turn_on:
               id: led
-              brightness: 100%
+              brightness: 70%
               red: 100%
               green: 0%
               blue: 0%
         else:
-          - light.turn_on: led
+          - light.turn_off: led
 
 #G4=IR
 remote_transmitter:
@@ -78,8 +77,9 @@ light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
     pin: 35
-    num_leds: 1
-    rmt_channel: 0
+    num_leds: 4
+    # RMT 0 channels will be occupied by IR
+    rmt_channel: 1
     chipset: ws2812
     id: led
     name: "Led"
@@ -87,7 +87,15 @@ light:
 #G41=Button
 binary_sensor:
   - platform: gpio
+    name: Button
     pin:
       number: GPIO41
       inverted: true
-    name: Button
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - logger.log: Button Pressed
